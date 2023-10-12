@@ -33,7 +33,12 @@ public class SqlWriter implements UnstructuredWriter {
         }
 
         StringBuilder sqlPatten = new StringBuilder(4096).append(insertPrefix);
-        sqlPatten.append(splitedRows.stream().map(e -> "'" + DataXCsvWriter.replace(e, "'", "''") + "'").collect(Collectors.joining(",")));
+        sqlPatten.append(splitedRows.stream().map(e -> {
+            if (e == null) {
+                return "NULL";
+            }
+            return "'" + DataXCsvWriter.replace(e, "'", "''") + "'";
+        }).collect(Collectors.joining(",")));
         sqlPatten.append(");").append(lineSeparator);
         this.sqlWriter.write(sqlPatten.toString());
     }

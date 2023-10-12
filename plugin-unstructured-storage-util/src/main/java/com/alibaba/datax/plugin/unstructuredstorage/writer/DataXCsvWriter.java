@@ -98,7 +98,10 @@ public class DataXCsvWriter {
     public void write(String var1, boolean var2) throws IOException {
         this.checkClosed();
         if(var1 == null) {
-            var1 = "";
+//            var1 = "";
+            this.writer.write("");
+            this.firstColumn = false;
+            return;
         }
 
         if(!this.firstColumn) {

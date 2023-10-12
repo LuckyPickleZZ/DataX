@@ -328,7 +328,7 @@ public class UnstructuredStorageWriterUtil {
                         }
                     } else {
                         // warn: it's all ok if nullFormat is null
-                        splitedRows.add(nullFormat);
+                        splitedRows.add(null);
                     }
                 }
             }
