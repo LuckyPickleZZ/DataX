@@ -118,7 +118,7 @@ public class TaskGroupContainer extends AbstractContainer {
                     CoreConstant.DATAX_CORE_CONTAINER_TASK_FAILOVER_RETRYINTERVALINMSEC, 10000);
 
             long taskMaxWaitInMsec = this.configuration.getLong(CoreConstant.DATAX_CORE_CONTAINER_TASK_FAILOVER_MAXWAITINMSEC, 60000);
-            
+
             List<Configuration> taskConfigs = this.configuration
                     .getListConfiguration(CoreConstant.DATAX_JOB_CONTENT);
 
@@ -126,12 +126,12 @@ public class TaskGroupContainer extends AbstractContainer {
                 LOG.debug("taskGroup[{}]'s task configs[{}]", this.taskGroupId,
                         JSON.toJSONString(taskConfigs));
             }
-            
+
             int taskCountInThisTaskGroup = taskConfigs.size();
             LOG.info(String.format(
                     "taskGroupId=[%d] start [%d] channels for [%d] tasks.",
                     this.taskGroupId, channelNumber, taskCountInThisTaskGroup));
-            
+
             this.containerCommunicator.registerCommunication(taskConfigs);
 
             Map<Integer, Configuration> taskConfigMap = buildTaskConfigMap(taskConfigs); //taskId与task配置
@@ -186,7 +186,7 @@ public class TaskGroupContainer extends AbstractContainer {
                         }
                     }
             	}
-            	
+
                 // 2.发现该taskGroup下taskExecutor的总状态失败则汇报错误
                 if (failedOrKilled) {
                     lastTaskGroupContainerCommunication = reportTaskGroupCommunication(
@@ -195,7 +195,7 @@ public class TaskGroupContainer extends AbstractContainer {
                     throw DataXException.asDataXException(
                             FrameworkErrorCode.PLUGIN_RUNTIME_ERROR, lastTaskGroupContainerCommunication.getThrowable());
                 }
-                
+
                 //3.有任务未执行，且正在运行的任务数小于最大通道限制
                 Iterator<Configuration> iterator = taskQueue.iterator();
                 while(iterator.hasNext() && runTasks.size() < channelNumber){
@@ -296,7 +296,7 @@ public class TaskGroupContainer extends AbstractContainer {
             }
         }
     }
-    
+
     private Map<Integer, Configuration> buildTaskConfigMap(List<Configuration> configurations){
     	Map<Integer, Configuration> map = new HashMap<Integer, Configuration>();
     	for(Configuration taskConfig : configurations){
@@ -313,19 +313,21 @@ public class TaskGroupContainer extends AbstractContainer {
     	}
     	return remainTasks;
     }
-    
+
     private TaskExecutor removeTask(List<TaskExecutor> taskList, int taskId){
     	Iterator<TaskExecutor> iterator = taskList.iterator();
     	while(iterator.hasNext()){
     		TaskExecutor taskExecutor = iterator.next();
     		if(taskExecutor.getTaskId() == taskId){
     			iterator.remove();
+                // shutdown to avoid thread leak
+                taskExecutor.shutdown();
     			return taskExecutor;
     		}
     	}
     	return null;
     }
-    
+
     private boolean isAllTaskDone(List<TaskExecutor> taskList){
     	for(TaskExecutor taskExecutor : taskList){
     		if(!taskExecutor.isTaskFinished()){
@@ -365,9 +367,9 @@ public class TaskGroupContainer extends AbstractContainer {
         private Thread readerThread;
 
         private Thread writerThread;
-        
+
         private ReaderRunner readerRunner;
-        
+
         private WriterRunner writerRunner;
 
         /**
@@ -532,7 +534,7 @@ public class TaskGroupContainer extends AbstractContainer {
 
             return true;
         }
-        
+
         private int getTaskId(){
         	return taskId;
         }
@@ -544,7 +546,7 @@ public class TaskGroupContainer extends AbstractContainer {
         private int getAttemptCount(){
             return attemptCount;
         }
-        
+
         private boolean supportFailOver(){
         	return writerRunner.supportFailOver();
         }

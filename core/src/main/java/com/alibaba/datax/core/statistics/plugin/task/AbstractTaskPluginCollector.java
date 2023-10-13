@@ -1,14 +1,15 @@
 package com.alibaba.datax.core.statistics.plugin.task;
 
-import com.alibaba.datax.core.statistics.communication.Communication;
-import com.alibaba.datax.core.statistics.communication.CommunicationTool;
 import com.alibaba.datax.common.constant.PluginType;
 import com.alibaba.datax.common.element.Record;
 import com.alibaba.datax.common.exception.DataXException;
 import com.alibaba.datax.common.plugin.TaskPluginCollector;
 import com.alibaba.datax.common.util.Configuration;
+import com.alibaba.datax.core.statistics.communication.Communication;
+import com.alibaba.datax.core.statistics.communication.CommunicationTool;
 import com.alibaba.datax.core.util.FrameworkErrorCode;
-
+import com.alibaba.datax.core.util.container.CoreConstant;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,17 +20,25 @@ public abstract class AbstractTaskPluginCollector extends TaskPluginCollector {
     private static final Logger LOG = LoggerFactory
             .getLogger(AbstractTaskPluginCollector.class);
 
+    /**
+     * custom dirty records logger
+     */
+    private static final Logger DIRTY_LOGGER = LoggerFactory.getLogger("DirtyRecordLogger");
+
     private Communication communication;
 
     private Configuration configuration;
 
     private PluginType pluginType;
 
+    private Long errorLimit;
+
     public AbstractTaskPluginCollector(Configuration conf, Communication communication,
                                        PluginType type) {
         this.configuration = conf;
         this.communication = communication;
         this.pluginType = type;
+        errorLimit = configuration.getLong(CoreConstant.DATAX_JOB_SETTING_ERRORLIMIT_RECORD);
     }
 
     public Communication getCommunication() {
@@ -72,6 +81,13 @@ public abstract class AbstractTaskPluginCollector extends TaskPluginCollector {
             throw DataXException.asDataXException(
                     FrameworkErrorCode.RUNTIME_ERROR,
                     String.format("不知道的插件类型[%s].", this.pluginType));
+        }
+
+        errorMessage = StringUtils.isBlank(errorMessage) ? t.getMessage() : errorMessage;
+        DIRTY_LOGGER.warn("Dirty record : [{}], reason: {}", dirtyRecord, errorMessage);
+
+        if (errorLimit != null && errorLimit == 0L) {
+            throw DataXException.asDataXException(FrameworkErrorCode.PLUGIN_DIRTY_DATA_LIMIT_EXCEED, t);
         }
     }
 }
