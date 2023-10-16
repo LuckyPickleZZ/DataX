@@ -23,7 +23,7 @@ public abstract class AbstractTaskPluginCollector extends TaskPluginCollector {
     /**
      * custom dirty records logger
      */
-    private static final Logger DIRTY_LOGGER = LoggerFactory.getLogger("DirtyRecordLogger");
+    private static final Logger DIRTY_LOGGER = LoggerFactory.getLogger("DataTransferLogger");
 
     private Communication communication;
 

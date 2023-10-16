@@ -28,6 +28,7 @@ import com.alibaba.datax.core.util.container.CoreConstant;
 import com.alibaba.datax.core.util.container.LoadUtil;
 import com.alibaba.datax.dataxservice.face.domain.enums.State;
 import com.alibaba.fastjson2.JSON;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.Validate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,6 +60,8 @@ public class TaskGroupContainer extends AbstractContainer {
     private String taskCollectorClass;
 
     private TaskMonitor taskMonitor = TaskMonitor.getInstance();
+
+    private List<TaskExecutor> runTasks;
 
     public TaskGroupContainer(Configuration configuration) {
         super(configuration);
@@ -137,7 +140,7 @@ public class TaskGroupContainer extends AbstractContainer {
             Map<Integer, Configuration> taskConfigMap = buildTaskConfigMap(taskConfigs); //taskId与task配置
             List<Configuration> taskQueue = buildRemainTasks(taskConfigs); //待运行task列表
             Map<Integer, TaskExecutor> taskFailedExecutorMap = new HashMap<Integer, TaskExecutor>(); //taskId与上次失败实例
-            List<TaskExecutor> runTasks = new ArrayList<TaskExecutor>(channelNumber); //正在运行task
+            runTasks = new ArrayList<TaskExecutor>(channelNumber); //正在运行task
             Map<Integer, Long> taskStartTimeMap = new HashMap<Integer, Long>(); //任务开始时间
 
             long lastReportTimeStamp = 0;
@@ -284,6 +287,17 @@ public class TaskGroupContainer extends AbstractContainer {
             throw DataXException.asDataXException(
                     FrameworkErrorCode.RUNTIME_ERROR, e);
         }finally {
+            // 清理任务线程
+            if (CollectionUtils.isNotEmpty(runTasks)) {
+                Iterator<TaskExecutor> iterator = runTasks.iterator();
+                while (iterator.hasNext()) {
+                    TaskExecutor next = iterator.next();
+                    next.shutdown();
+                    taskMonitor.removeTask(next.getTaskId());
+                    iterator.remove();
+                }
+            }
+
             if(!PerfTrace.getInstance().isJob()){
                 //最后打印cpu的平均消耗，GC的统计
                 VMInfo vmInfo = VMInfo.getVmInfo();

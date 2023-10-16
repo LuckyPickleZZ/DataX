@@ -105,8 +105,21 @@ public abstract class AbstractScheduler {
             // 以 failed 状态退出
             LOG.error("捕获到InterruptedException异常!", e);
 
-            throw DataXException.asDataXException(
-                    FrameworkErrorCode.RUNTIME_ERROR, e);
+            dealKillingStat(this.containerCommunicator, totalTasks);
+
+            // 最后采集一次
+            Communication nowJobContainerCommunication = this.containerCommunicator.collect();
+            nowJobContainerCommunication.setTimestamp(System.currentTimeMillis());
+            LOG.debug(nowJobContainerCommunication.toString());
+
+            //汇报周期
+            long now = System.currentTimeMillis();
+            if (now - lastReportTimeStamp > jobReportIntervalInMillSec) {
+                Communication reportCommunication = CommunicationTool
+                        .getReportCommunication(nowJobContainerCommunication, lastJobContainerCommunication, totalTasks);
+
+                this.containerCommunicator.report(reportCommunication);
+            }
         }
 
     }
