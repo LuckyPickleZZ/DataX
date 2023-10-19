@@ -105,8 +105,6 @@ public abstract class AbstractScheduler {
             // 以 failed 状态退出
             LOG.error("捕获到InterruptedException异常!", e);
 
-            dealKillingStat(this.containerCommunicator, totalTasks);
-
             // 最后采集一次
             Communication nowJobContainerCommunication = this.containerCommunicator.collect();
             nowJobContainerCommunication.setTimestamp(System.currentTimeMillis());
@@ -120,6 +118,8 @@ public abstract class AbstractScheduler {
 
                 this.containerCommunicator.report(reportCommunication);
             }
+
+            dealKillingStat(this.containerCommunicator, totalTasks);
         }
 
     }
