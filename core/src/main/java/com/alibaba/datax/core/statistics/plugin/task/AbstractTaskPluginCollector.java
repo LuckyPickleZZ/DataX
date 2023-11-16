@@ -59,6 +59,11 @@ public abstract class AbstractTaskPluginCollector extends TaskPluginCollector {
     }
 
     @Override
+    final public void collectStatistics(String key, long value) {
+        this.communication.increaseCounter(key, value);
+    }
+
+    @Override
     public void collectDirtyRecord(Record dirtyRecord, Throwable t,
                                    String errorMessage) {
 
@@ -84,7 +89,7 @@ public abstract class AbstractTaskPluginCollector extends TaskPluginCollector {
         }
 
         errorMessage = StringUtils.isBlank(errorMessage) ? t.getMessage() : errorMessage;
-        DIRTY_LOGGER.warn("Dirty record : [{}], reason: {}", dirtyRecord, errorMessage);
+        DIRTY_LOGGER.warn("Dirty record: [{}], reason: {}", dirtyRecord, errorMessage);
 
         if (errorLimit != null && errorLimit == 0L) {
             throw DataXException.asDataXException(FrameworkErrorCode.PLUGIN_DIRTY_DATA_LIMIT_EXCEED, t);

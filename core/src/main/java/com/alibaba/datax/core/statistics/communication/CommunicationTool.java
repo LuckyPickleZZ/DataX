@@ -27,6 +27,8 @@ public final class CommunicationTool {
     public static final String WRITE_RECEIVED_RECORDS = "writeReceivedRecords";
     public static final String WRITE_RECEIVED_BYTES = "writeReceivedBytes";
 
+    public static final String REAL_WRITE_BYTES = "realWriteBytes";
+
     public static final String WRITE_FAILED_RECORDS = "writeFailedRecords";
     public static final String WRITE_FAILED_BYTES = "writeFailedBytes";
 

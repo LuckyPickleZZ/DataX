@@ -283,7 +283,13 @@ public class UnstructuredStorageWriterUtil {
             String lineSeparator = config.getString(Key.LINE_DELIMITER, IOUtils.LINE_SEPARATOR);
             List<String> headers = config.getList(Key.HEADER, String.class);
             Preconditions.checkArgument(CollectionUtils.isNotEmpty(headers), "column names are empty");
-            unstructuredWriter = new SqlWriter(writer, quoteChar, tableName, lineSeparator, headers);
+            String encoding = config.getString(Key.ENCODING,
+                    Constant.DEFAULT_ENCODING);
+            // handle blank encoding
+            if (StringUtils.isBlank(encoding)) {
+                encoding = Constant.DEFAULT_ENCODING;
+            }
+            unstructuredWriter = new SqlWriter(writer, quoteChar, tableName, lineSeparator, headers, encoding);
         }
 
         return unstructuredWriter;
@@ -332,7 +338,8 @@ public class UnstructuredStorageWriterUtil {
                     }
                 }
             }
-            unstructuredWriter.writeOneRecord(splitedRows);
+            long bytes = unstructuredWriter.writeOneRecord(splitedRows);
+            taskPluginCollector.collectStatistics("realWriteBytes", bytes);
         } catch (IllegalArgumentException e){
             // warn: dirty data
             taskPluginCollector.collectDirtyRecord(record, e);

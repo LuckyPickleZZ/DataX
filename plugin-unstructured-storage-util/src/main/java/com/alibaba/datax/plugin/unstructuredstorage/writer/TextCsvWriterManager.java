@@ -14,8 +14,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.csvreader.CsvWriter;
-
 
 public class TextCsvWriterManager {
 
@@ -39,7 +37,13 @@ class CsvWriterImpl implements UnstructuredWriter {
     public CsvWriterImpl(Writer writer, char fieldDelimiter, Configuration config) {
         this.fieldDelimiter = fieldDelimiter;
         this.lineDelimiter = config.getString(Key.LINE_DELIMITER, IOUtils.LINE_SEPARATOR);
-        this.csvWriter = new DataXCsvWriter(writer, this.fieldDelimiter);
+        String encoding = config.getString(Key.ENCODING,
+                Constant.DEFAULT_ENCODING);
+        // handle blank encoding
+        if (StringUtils.isBlank(encoding)) {
+            encoding = Constant.DEFAULT_ENCODING;
+        }
+        this.csvWriter = new DataXCsvWriter(writer, this.fieldDelimiter, encoding);
         this.csvWriter.setTextQualifier('"');
         this.csvWriter.setUseTextQualifier(true);
         // warn: in linux is \n , in windows is \r\n
@@ -70,11 +74,11 @@ class CsvWriterImpl implements UnstructuredWriter {
     }
 
     @Override
-    public void writeOneRecord(List<String> splitedRows) throws IOException {
+    public long writeOneRecord(List<String> splitedRows) throws IOException {
         if (splitedRows.isEmpty()) {
             LOG.info("Found one record line which is empty.");
         }
-        this.csvWriter.writeRecord(splitedRows.toArray(new String[0]));
+        return this.csvWriter.writeRecord(splitedRows.toArray(new String[0]));
     }
 
     @Override
@@ -96,21 +100,30 @@ class TextWriterImpl implements UnstructuredWriter {
     private String fieldDelimiter;
     private Writer textWriter;
     private String lineDelimiter;
+    private String encoding;
 
     public TextWriterImpl(Writer writer, String fieldDelimiter, Configuration config) {
         this.fieldDelimiter = fieldDelimiter;
         this.textWriter = writer;
         this.lineDelimiter = config.getString(Key.LINE_DELIMITER, IOUtils.LINE_SEPARATOR);
+        encoding = config.getString(Key.ENCODING,
+                Constant.DEFAULT_ENCODING);
+        // handle blank encoding
+        if (StringUtils.isBlank(encoding)) {
+            encoding = Constant.DEFAULT_ENCODING;
+        }
     }
 
     @Override
-    public void writeOneRecord(List<String> splitedRows) throws IOException {
+    public long writeOneRecord(List<String> splitedRows) throws IOException {
         if (splitedRows.isEmpty()) {
             LOG.info("Found one record line which is empty.");
         }
-        this.textWriter.write(String.format("%s%s",
+        String raw = String.format("%s%s",
                 StringUtils.join(splitedRows, this.fieldDelimiter),
-                this.lineDelimiter));
+                this.lineDelimiter);
+        this.textWriter.write(raw);
+        return raw.getBytes(encoding).length;
     }
 
     @Override

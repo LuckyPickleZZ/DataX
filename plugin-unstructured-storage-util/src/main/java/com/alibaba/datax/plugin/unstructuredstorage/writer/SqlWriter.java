@@ -16,20 +16,22 @@ public class SqlWriter implements UnstructuredWriter {
     private String lineSeparator;
     private String tableName;
     private StringBuilder insertPrefix;
+    private String encoding;
 
-    public SqlWriter(Writer writer, String quoteChar, String tableName, String lineSeparator, List<String> columnNames) {
+    public SqlWriter(Writer writer, String quoteChar, String tableName, String lineSeparator, List<String> columnNames, String encoding) {
         this.sqlWriter = writer;
         this.quoteChar = quoteChar;
         this.lineSeparator = lineSeparator;
         this.tableName = tableName;
+        this.encoding = encoding;
         buildInsertPrefix(columnNames);
     }
 
     @Override
-    public void writeOneRecord(List<String> splitedRows) throws IOException {
+    public long writeOneRecord(List<String> splitedRows) throws IOException {
         if (splitedRows.isEmpty()) {
             LOG.info("Found one record line which is empty.");
-            return;
+            return 0L;
         }
 
         StringBuilder sqlPatten = new StringBuilder(4096).append(insertPrefix);
@@ -40,7 +42,9 @@ public class SqlWriter implements UnstructuredWriter {
             return "'" + DataXCsvWriter.replace(e, "'", "''") + "'";
         }).collect(Collectors.joining(",")));
         sqlPatten.append(");").append(lineSeparator);
-        this.sqlWriter.write(sqlPatten.toString());
+        String str = sqlPatten.toString();
+        this.sqlWriter.write(str);
+        return str.getBytes().length;
     }
 
     private void buildInsertPrefix(List<String> columnNames) {

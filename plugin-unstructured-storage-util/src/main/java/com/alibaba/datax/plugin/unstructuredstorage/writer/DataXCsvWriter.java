@@ -18,10 +18,11 @@ public class DataXCsvWriter {
     private UserSettings userSettings;
     private boolean initialized;
     private boolean closed;
+    private String encoding;
     public static final int ESCAPE_MODE_DOUBLED = 1;
     public static final int ESCAPE_MODE_BACKSLASH = 2;
 
-    public DataXCsvWriter(Writer writer, char delimiter) {
+    public DataXCsvWriter(Writer writer, char delimiter, String encoding) {
         this.writer = null;
         this.fileName = null;
         this.firstColumn = true;
@@ -36,6 +37,7 @@ public class DataXCsvWriter {
             this.userSettings.Delimiter = delimiter;
             this.initialized = true;
         }
+        this.encoding = encoding;
     }
 
     public char getDelimiter() {
@@ -95,17 +97,18 @@ public class DataXCsvWriter {
         this.userSettings.ForceQualifier = var1;
     }
 
-    public void write(String var1, boolean var2) throws IOException {
+    public long write(String var1, boolean var2) throws IOException {
         this.checkClosed();
         if(var1 == null) {
 //            var1 = "";
             this.writer.write("");
             this.firstColumn = false;
-            return;
+            return 0;
         }
 
+        StringBuilder builder = new StringBuilder();
         if(!this.firstColumn) {
-            this.writer.write(this.userSettings.Delimiter);
+            builder.append(this.userSettings.Delimiter);
         }
 
         boolean var3 = this.userSettings.ForceQualifier;
@@ -132,7 +135,7 @@ public class DataXCsvWriter {
         }
 
         if(var3) {
-            this.writer.write(this.userSettings.TextQualifier);
+            builder.append(this.userSettings.TextQualifier);
             if(this.userSettings.EscapeMode == 2) {
                 var1 = replace(var1, "\\", "\\\\");
                 var1 = replace(var1, "" + this.userSettings.TextQualifier, "\\" + this.userSettings.TextQualifier);
@@ -158,12 +161,15 @@ public class DataXCsvWriter {
             }
         }
 
-        this.writer.write(var1);
+        builder.append(var1);
         if(var3) {
-            this.writer.write(this.userSettings.TextQualifier);
+            builder.append(this.userSettings.TextQualifier);
         }
+        String raw = builder.toString();
+        this.writer.write(raw);
 
         this.firstColumn = false;
+        return raw.getBytes(encoding).length;
     }
 
     public void write(String var1) throws IOException {
@@ -183,19 +189,20 @@ public class DataXCsvWriter {
         this.firstColumn = true;
     }
 
-    public void writeRecord(String[] var1, boolean var2) throws IOException {
+    public Long writeRecord(String[] var1, boolean var2) throws IOException {
+        long length = 0;
         if(var1 != null && var1.length > 0) {
             for(int var3 = 0; var3 < var1.length; ++var3) {
-                this.write(var1[var3], var2);
+                length += this.write(var1[var3], var2);
             }
 
             this.endRecord();
         }
-
+        return length;
     }
 
-    public void writeRecord(String[] var1) throws IOException {
-        this.writeRecord(var1, false);
+    public Long writeRecord(String[] var1) throws IOException {
+        return this.writeRecord(var1, false);
     }
 
     public void endRecord() throws IOException {
