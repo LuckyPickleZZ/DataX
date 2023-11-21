@@ -65,11 +65,11 @@ public final class CommunicationTool {
         now.setLongCounter(WRITE_SUCCEED_BYTES, getWriteSucceedBytes(now));
 
         long timeInterval = now.getTimestamp() - old.getTimestamp();
-        long sec = timeInterval <= 1000 ? 1 : timeInterval / 1000;
-        long bytesSpeed = (totalReadBytes
-                - getTotalReadBytes(old)) / sec;
-        long recordsSpeed = (totalReadRecords
-                - getTotalReadRecords(old)) / sec;
+        double sec = timeInterval * 1D / 1000;
+        long bytesSpeed = (long) ((totalReadBytes
+                        - getTotalReadBytes(old)) / sec);
+        long recordsSpeed = (long) ((totalReadRecords
+                        - getTotalReadRecords(old)) / sec);
 
         now.setLongCounter(BYTE_SPEED, bytesSpeed < 0 ? 0 : bytesSpeed);
         now.setLongCounter(RECORD_SPEED, recordsSpeed < 0 ? 0 : recordsSpeed);
@@ -134,7 +134,7 @@ public final class CommunicationTool {
             sb.append(" | ");
             if (communication.getLongCounter(CommunicationTool.TRANSFORMER_USED_TIME) > 0
                     || communication.getLongCounter(CommunicationTool.TRANSFORMER_SUCCEED_RECORDS) > 0
-                    ||communication.getLongCounter(CommunicationTool.TRANSFORMER_FAILED_RECORDS) > 0
+                    || communication.getLongCounter(CommunicationTool.TRANSFORMER_FAILED_RECORDS) > 0
                     || communication.getLongCounter(CommunicationTool.TRANSFORMER_FILTER_RECORDS) > 0) {
                 sb.append("Transfermor Success ");
                 sb.append(String.format("%d records", communication.getLongCounter(CommunicationTool.TRANSFORMER_SUCCEED_RECORDS)));

@@ -8,6 +8,7 @@ import com.alibaba.datax.core.taskgroup.TaskGroupContainer;
 import com.alibaba.datax.core.taskgroup.runner.TaskGroupContainerRunner;
 import com.alibaba.datax.core.util.FrameworkErrorCode;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -15,6 +16,7 @@ import java.util.concurrent.Executors;
 public abstract class ProcessInnerScheduler extends AbstractScheduler {
 
     private ExecutorService taskGroupContainerExecutorService;
+    private List<TaskGroupContainerRunner> runners;
 
     public ProcessInnerScheduler(AbstractContainerCommunicator containerCommunicator) {
         super(containerCommunicator);
@@ -24,9 +26,10 @@ public abstract class ProcessInnerScheduler extends AbstractScheduler {
     public void startAllTaskGroup(List<Configuration> configurations) {
         this.taskGroupContainerExecutorService = Executors
                 .newFixedThreadPool(configurations.size());
-
+        this.runners = new ArrayList<>();
         for (Configuration taskGroupConfiguration : configurations) {
             TaskGroupContainerRunner taskGroupContainerRunner = newTaskGroupContainerRunner(taskGroupConfiguration);
+            this.runners.add(taskGroupContainerRunner);
             this.taskGroupContainerExecutorService.execute(taskGroupContainerRunner);
         }
 
@@ -47,6 +50,11 @@ public abstract class ProcessInnerScheduler extends AbstractScheduler {
         this.taskGroupContainerExecutorService.shutdownNow();
         throw DataXException.asDataXException(FrameworkErrorCode.KILLED_EXIT_VALUE,
                 "job killed status");
+    }
+
+    @Override
+    public void dealCanceledStat(AbstractContainerCommunicator frameworkCollector, int totalTasks) {
+        this.taskGroupContainerExecutorService.shutdownNow();
     }
 
 

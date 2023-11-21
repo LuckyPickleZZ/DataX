@@ -25,6 +25,8 @@ public abstract class AbstractScheduler {
 
     private Long jobId;
 
+    private volatile boolean canceled;
+
     public Long getJobId() {
         return jobId;
     }
@@ -58,7 +60,7 @@ public abstract class AbstractScheduler {
 
         long lastReportTimeStamp = System.currentTimeMillis();
         try {
-            while (true) {
+            while (!canceled) {
                 /**
                  * step 1: collect job stat
                  * step 2: getReport info, then report it
@@ -101,6 +103,11 @@ public abstract class AbstractScheduler {
 
                 Thread.sleep(jobSleepIntervalInMillSec);
             }
+
+            if (canceled) {
+                dealCanceledStat(this.containerCommunicator, totalTasks);
+                LOG.info("All tasks are canceled.");
+            }
         } catch (InterruptedException e) {
             // 以 failed 状态退出
             LOG.error("捕获到InterruptedException异常!", e);
@@ -124,11 +131,17 @@ public abstract class AbstractScheduler {
 
     }
 
+    public void cancel() {
+        canceled = true;
+    }
+
     protected abstract void startAllTaskGroup(List<Configuration> configurations);
 
     protected abstract void dealFailedStat(AbstractContainerCommunicator frameworkCollector, Throwable throwable);
 
     protected abstract void dealKillingStat(AbstractContainerCommunicator frameworkCollector, int totalTasks);
+
+    protected abstract void dealCanceledStat(AbstractContainerCommunicator frameworkCollector, int totalTasks);
 
     private int calculateTaskCount(List<Configuration> configurations) {
         int totalTasks = 0;

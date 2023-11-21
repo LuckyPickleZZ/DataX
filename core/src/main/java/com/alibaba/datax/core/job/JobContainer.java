@@ -82,6 +82,10 @@ public class JobContainer extends AbstractContainer {
 
     private ErrorRecordChecker errorLimit;
 
+    private AbstractScheduler scheduler;
+
+    private boolean canceled;
+
     public JobContainer(Configuration configuration) {
         super(configuration);
 
@@ -178,6 +182,14 @@ public class JobContainer extends AbstractContainer {
                     this.logStatistics();
                 }
             }
+        }
+    }
+
+    @Override
+    public void cancel() {
+        canceled = true;
+        if (scheduler != null ) {
+            scheduler.cancel();
         }
     }
 
@@ -511,7 +523,6 @@ public class JobContainer extends AbstractContainer {
         LOG.info("Scheduler starts [{}] taskGroups.", taskGroupConfigs.size());
 
         ExecuteMode executeMode = null;
-        AbstractScheduler scheduler;
         try {
         	executeMode = ExecuteMode.STANDALONE;
             scheduler = initStandaloneScheduler(this.configuration);

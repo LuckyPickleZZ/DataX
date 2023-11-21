@@ -94,6 +94,9 @@ public class TaskGroupContainer extends AbstractContainer {
 
     @Override
     public void start() {
+        Communication lastTaskGroupContainerCommunication = new Communication();
+        List<Configuration> taskConfigs = this.configuration
+                .getListConfiguration(CoreConstant.DATAX_JOB_CONTENT);
         try {
             /**
              * 状态check时间间隔，较短，可以把任务及时分发到对应channel中
@@ -122,9 +125,6 @@ public class TaskGroupContainer extends AbstractContainer {
 
             long taskMaxWaitInMsec = this.configuration.getLong(CoreConstant.DATAX_CORE_CONTAINER_TASK_FAILOVER_MAXWAITINMSEC, 60000);
 
-            List<Configuration> taskConfigs = this.configuration
-                    .getListConfiguration(CoreConstant.DATAX_JOB_CONTENT);
-
             if(LOG.isDebugEnabled()) {
                 LOG.debug("taskGroup[{}]'s task configs[{}]", this.taskGroupId,
                         JSON.toJSONString(taskConfigs));
@@ -144,7 +144,6 @@ public class TaskGroupContainer extends AbstractContainer {
             Map<Integer, Long> taskStartTimeMap = new HashMap<Integer, Long>(); //任务开始时间
 
             long lastReportTimeStamp = 0;
-            Communication lastTaskGroupContainerCommunication = new Communication();
 
             while (true) {
             	//1.判断task状态
@@ -282,11 +281,14 @@ public class TaskGroupContainer extends AbstractContainer {
                 nowTaskGroupContainerCommunication.setThrowable(e);
             }
             nowTaskGroupContainerCommunication.setState(State.FAILED);
-            this.containerCommunicator.report(nowTaskGroupContainerCommunication);
+
+            Communication reportCommunication = CommunicationTool.getReportCommunication(nowTaskGroupContainerCommunication,
+                    lastTaskGroupContainerCommunication, taskConfigs.size());
+            this.containerCommunicator.report(reportCommunication);
 
             throw DataXException.asDataXException(
                     FrameworkErrorCode.RUNTIME_ERROR, e);
-        }finally {
+        } finally {
             // 清理任务线程
             if (CollectionUtils.isNotEmpty(runTasks)) {
                 Iterator<TaskExecutor> iterator = runTasks.iterator();
@@ -310,6 +312,9 @@ public class TaskGroupContainer extends AbstractContainer {
             }
         }
     }
+
+    @Override
+    public void cancel() {}
 
     private Map<Integer, Configuration> buildTaskConfigMap(List<Configuration> configurations){
     	Map<Integer, Configuration> map = new HashMap<Integer, Configuration>();
