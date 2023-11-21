@@ -6,6 +6,6 @@ public abstract class AbstractReporter {
 
     public abstract void reportJobCommunication(Long jobId, Communication communication);
 
-    public abstract void reportTGCommunication(Integer taskGroupId, Communication communication);
+    public abstract void reportTGCommunication(Long jobId, Integer taskGroupId, Communication communication);
 
 }

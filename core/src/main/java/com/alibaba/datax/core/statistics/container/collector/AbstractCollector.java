@@ -29,7 +29,7 @@ public abstract class AbstractCollector {
         for (Configuration config : taskGroupConfigurationList) {
             int taskGroupId = config.getInt(
                     CoreConstant.DATAX_CORE_CONTAINER_TASKGROUP_ID);
-            LocalTGCommunicationManager.registerTaskGroupCommunication(taskGroupId, new Communication());
+            LocalTGCommunicationManager.registerTaskGroupCommunication(jobId, taskGroupId, new Communication());
         }
     }
 
@@ -55,11 +55,11 @@ public abstract class AbstractCollector {
     public abstract Communication collectFromTaskGroup();
 
     public Map<Integer, Communication> getTGCommunicationMap() {
-        return LocalTGCommunicationManager.getTaskGroupCommunicationMap();
+        return LocalTGCommunicationManager.getTaskGroupCommunicationMap(jobId);
     }
 
     public Communication getTGCommunication(Integer taskGroupId) {
-        return LocalTGCommunicationManager.getTaskGroupCommunication(taskGroupId);
+        return LocalTGCommunicationManager.getTaskGroupCommunication(jobId, taskGroupId);
     }
 
     public Communication getTaskCommunication(Integer taskId) {

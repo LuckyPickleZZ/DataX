@@ -13,7 +13,7 @@ public class StandaloneTGContainerCommunicator extends AbstractTGContainerCommun
 
     @Override
     public void report(Communication communication) {
-        super.getReporter().reportTGCommunication(super.taskGroupId, communication);
+        super.getReporter().reportTGCommunication(super.jobId, super.taskGroupId, communication);
     }
 
 }
