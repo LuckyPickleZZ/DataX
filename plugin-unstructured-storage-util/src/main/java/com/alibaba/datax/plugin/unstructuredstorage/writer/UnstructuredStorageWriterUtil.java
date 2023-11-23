@@ -12,6 +12,7 @@ import java.util.UUID;
 import com.alibaba.datax.common.element.BytesColumn;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.compress.compressors.CompressorOutputStream;
@@ -116,6 +117,10 @@ public class UnstructuredStorageWriterUtil {
 
     public static List<Configuration> split(Configuration writerSliceConfig,
                                             Set<String> originAllFileExists, int mandatoryNumber) {
+        if (mandatoryNumber == 1) {
+            LOG.info("there is only one task, do not split files");
+            return Lists.newArrayList(writerSliceConfig);
+        }
         LOG.info("begin do split...");
         Set<String> allFileExists = new HashSet<String>();
         allFileExists.addAll(originAllFileExists);
