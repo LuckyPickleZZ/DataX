@@ -5,7 +5,7 @@ import com.alibaba.datax.common.plugin.RecordReceiver;
 import com.alibaba.datax.common.spi.Writer;
 import com.alibaba.datax.common.util.Configuration;
 import com.alibaba.datax.plugin.unstructuredstorage.writer.UnstructuredStorageWriterUtil;
-
+import com.google.common.collect.Lists;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.filefilter.PrefixFileFilter;
@@ -13,17 +13,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FilenameFilter;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.io.*;
+import java.util.*;
 
 /**
  * Created by haiwei.luo on 14-9-17.
@@ -210,6 +201,10 @@ public class TxtFileWriter extends Writer {
 
         @Override
         public List<Configuration> split(int mandatoryNumber) {
+            if (mandatoryNumber == 1) {
+                LOG.info("there is only one task, do not split files");
+                return Lists.newArrayList(writerSliceConfig);
+            }
             LOG.info("begin do split...");
             List<Configuration> writerSplitConfigs = new ArrayList<Configuration>();
             String filePrefix = this.writerSliceConfig
