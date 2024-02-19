@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -100,10 +101,13 @@ public final class OriginalConfPretreatmentUtil {
         } else {
             boolean isPreCheck = originalConfig.getBool(Key.DRYRUN, false);
             List<String> allColumns;
-            if (isPreCheck){
-                allColumns = DBUtil.getTableColumnsByConn(DATABASE_TYPE,connectionFactory.getConnecttionWithoutRetry(), oneTable, connectionFactory.getConnectionInfo());
-            }else{
-                allColumns = DBUtil.getTableColumnsByConn(DATABASE_TYPE,connectionFactory.getConnecttion(), oneTable, connectionFactory.getConnectionInfo());
+            Connection conn = null;
+            try {
+                conn = connectionFactory.getConnecttion();
+                DBUtil.dealWithSessionConfig(conn, originalConfig, DATABASE_TYPE, connectionFactory.getConnectionInfo());
+                allColumns = DBUtil.getTableColumnsByConn(DATABASE_TYPE, conn, oneTable, connectionFactory.getConnectionInfo());
+            } finally {
+                DBUtil.closeDBResources(null, conn);
             }
 
             LOG.info("table:[{}] all columns:[\n{}\n].", oneTable,
@@ -124,6 +128,7 @@ public final class OriginalConfPretreatmentUtil {
                 Connection connection = null;
                 try {
                     connection = connectionFactory.getConnecttion();
+                    DBUtil.dealWithSessionConfig(connection, originalConfig, DATABASE_TYPE, connectionFactory.getConnectionInfo());
                     // 检查列是否都为数据库表中正确的列（通过执行一次 select column from table 进行判断）
                     DBUtil.getColumnMetaData(connection, oneTable,StringUtils.join(userConfiguredColumns, ","));
                 } finally {
